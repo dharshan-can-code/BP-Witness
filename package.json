@@ -1,0 +1,12 @@
+{
+  "name": "bp-witness",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "A webcam referee for home blood pressure readings",
+  "scripts": {
+    "dev": "vercel dev",
+    "preview": "npx serve .",
+    "test": "node --test"
+  }
+}

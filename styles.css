@@ -1,0 +1,122 @@
+:root {
+  --bg: #f6f7fb;
+  --card: #ffffff;
+  --text: #1d2433;
+  --muted: #5d6679;
+  --accent: #2f6fed;
+  --ok: #1f9d55;
+  --bad: #d64545;
+  --warn: #c98a00;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.5;
+}
+
+header {
+  padding: 16px 24px;
+  background: var(--card);
+  border-bottom: 1px solid #e3e6ee;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px 24px;
+}
+header h1 { margin: 0; font-size: 1.5rem; }
+.tagline { margin: 0; color: var(--muted); flex: 1; }
+nav { display: flex; gap: 8px; }
+
+main {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr);
+  gap: 24px;
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+main:has(#camera-panel.hidden) { grid-template-columns: minmax(0, 1fr); max-width: 800px; }
+
+.screen, #camera-panel {
+  background: var(--card);
+  border-radius: 12px;
+  padding: 20px 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.hidden { display: none !important; }
+
+.camera-wrap { position: relative; width: 100%; background: #000; border-radius: 8px; overflow: hidden; }
+#video, #overlay { width: 100%; display: block; transform: scaleX(-1); }
+#overlay { position: absolute; inset: 0; height: 100%; }
+.camera-msg {
+  position: absolute; left: 0; right: 0; bottom: 0;
+  padding: 8px 12px; color: #fff; background: rgba(0, 0, 0, 0.55);
+  font-size: 0.95rem;
+}
+.camera-msg:empty { display: none; }
+
+.checklist { list-style: none; padding: 0; margin: 16px 0 0; display: grid; gap: 6px; }
+.checklist li {
+  padding: 8px 12px; border-radius: 8px; background: #eef1f7; font-weight: 500;
+  display: flex; justify-content: space-between; gap: 8px;
+}
+.checklist li.ok { background: #e3f5ea; color: var(--ok); }
+.checklist li.bad { background: #fbe7e7; color: var(--bad); }
+.checklist li.unknown { color: var(--muted); }
+.checklist li small { font-weight: 400; }
+
+.steps li { margin-bottom: 6px; }
+label { display: block; margin: 8px 0; }
+fieldset { border: 1px solid #e3e6ee; border-radius: 8px; margin: 12px 0; }
+.demo { color: var(--muted); font-size: 0.9rem; }
+
+button {
+  font: inherit; font-weight: 600;
+  padding: 10px 18px; border-radius: 8px; border: none;
+  background: var(--accent); color: #fff; cursor: pointer;
+}
+button:disabled { opacity: 0.45; cursor: not-allowed; }
+button.secondary { background: #e3e6ee; color: var(--text); }
+button.link { background: none; color: var(--accent); padding: 4px 8px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.row { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 24px; }
+.card-inset { background: #f2f5fb; border-radius: 10px; padding: 12px 16px; margin: 16px 0; }
+.card-inset h3 { margin: 0 0 4px; font-size: 1.05rem; }
+.framing { margin-top: 12px; }
+
+.big-number { font-size: 4rem; font-weight: 700; text-align: center; margin: 12px 0; font-variant-numeric: tabular-nums; }
+.status { min-height: 1.5em; font-weight: 500; }
+.status.bad { color: var(--bad); }
+.status.ok { color: var(--ok); }
+
+.manual { display: flex; gap: 12px; flex-wrap: wrap; margin: 12px 0; }
+.manual input { width: 90px; font: inherit; padding: 6px; }
+
+.result { border-radius: 12px; padding: 16px 20px; }
+.result.trusted { background: #e3f5ea; }
+.result.untrusted { background: #fff4dc; }
+.result .reading { font-size: 2.5rem; font-weight: 700; }
+.result ul { margin: 8px 0 0; }
+.disclaimer { color: var(--muted); font-size: 0.85rem; }
+
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 8px; border-bottom: 1px solid #e3e6ee; vertical-align: top; }
+
+.print-only { display: none; }
+@media print {
+  header nav, .no-print, #camera-panel { display: none !important; }
+  .print-only { display: block; }
+  main { display: block; padding: 0; }
+  .screen { box-shadow: none; }
+  .screen:not(#screen-history) { display: none !important; }
+}
+
+@media (max-width: 800px) {
+  main { grid-template-columns: minmax(0, 1fr); }
+}

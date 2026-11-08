@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BP Witness</title>
+  <meta name="description" content="A webcam referee for home blood pressure readings." />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header>
+    <h1>BP Witness</h1>
+    <p class="tagline">Your blood pressure number is only as good as how you sat for it.</p>
+    <nav>
+      <button data-goto="setup" class="link">New reading</button>
+      <button data-goto="history" class="link">History</button>
+    </nav>
+  </header>
+
+  <main>
+    <!-- Camera stays on screen for every live step -->
+    <section id="camera-panel" class="hidden" aria-label="Camera">
+      <div class="camera-wrap">
+        <video id="video" autoplay playsinline muted></video>
+        <canvas id="overlay"></canvas>
+        <div id="camera-msg" class="camera-msg" role="status"></div>
+      </div>
+      <ul id="checklist" class="checklist" aria-live="polite"></ul>
+    </section>
+
+    <!-- STEP 1: SETUP -->
+    <section id="screen-setup" class="screen">
+      <h2>1. Get set up</h2>
+      <ol class="steps">
+        <li>Sit in a chair with a back, next to a table. Put the cuff on your bare upper arm.</li>
+        <li>Put your laptop or phone about 2 m (6 ft) away, at an angle, so the camera sees your <b>whole body, feet included</b>.</li>
+      </ol>
+
+      <div class="row">
+        <label>Cuff is on my
+          <select id="cuff-arm">
+            <option value="left">left arm</option>
+            <option value="right">right arm</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="voice-on" checked /> Spoken coaching</label>
+        <label class="demo"><input type="checkbox" id="demo-mode" /> Demo mode (30-second rest)</label>
+      </div>
+
+      <div class="actions">
+        <button id="btn-start-camera">Turn on camera &amp; microphone</button>
+      </div>
+
+      <div id="framing" class="framing hidden">
+        <p id="framing-status" class="status"></p>
+      </div>
+
+      <div id="cuff-check" class="card-inset hidden">
+        <h3>AI cuff check</h3>
+        <p>Hold your cuff arm close to the camera, then press the button. AI checks that the cuff is on bare skin, not over a sleeve.</p>
+        <button id="btn-check-cuff" class="secondary">Check my cuff</button>
+        <p id="cuff-status" class="status"></p>
+      </div>
+
+      <fieldset>
+        <legend>Things the camera can't see. Check the ones that are true:</legend>
+        <label><input type="checkbox" class="precheck" id="pre-bareArm" value="bareArm" /> The cuff is on bare skin, not over a sleeve</label>
+        <label><input type="checkbox" class="precheck" value="bladder" /> I emptied my bladder</label>
+        <label><input type="checkbox" class="precheck" value="noStimulants" /> No caffeine, exercise or smoking in the last 30 minutes</label>
+      </fieldset>
+
+      <div class="actions">
+        <button id="btn-start-rest" disabled>Start resting</button>
+        <button id="btn-start-anyway" class="link hidden">Start anyway</button>
+      </div>
+    </section>
+
+    <!-- STEP 2: REST -->
+    <section id="screen-rest" class="screen hidden">
+      <h2>2. Rest quietly</h2>
+      <p>Sit back, feet flat, arm resting on the table. The timer only counts while you're sitting correctly, still and quiet.</p>
+      <div id="rest-timer" class="big-number" aria-live="off">5:00</div>
+      <p id="rest-status" class="status" role="status"></p>
+      <button id="btn-skip-rest" class="secondary">Skip rest (marks the reading as not trusted)</button>
+    </section>
+
+    <!-- STEP 3: MEASURE -->
+    <section id="screen-measure" class="screen hidden">
+      <h2>3. Take your reading</h2>
+      <p>Press the start button on your cuff now. Stay still and silent until it finishes.</p>
+      <div id="measure-timer" class="big-number" aria-live="off">0:00</div>
+      <p id="measure-status" class="status" role="status"></p>
+      <button id="btn-measure-done">My cuff is done</button>
+    </section>
+
+    <!-- STEP 4: CAPTURE -->
+    <section id="screen-capture" class="screen hidden">
+      <h2>4. Show the result to the camera</h2>
+      <p>Hold the cuff's screen up close to the camera, then press the button. AI reads the numbers for you.</p>
+      <button id="btn-snap">Read my monitor</button>
+      <p id="capture-status" class="status" role="status"></p>
+      <div class="manual">
+        <label>Systolic (top) <input type="number" id="in-sys" min="50" max="260" inputmode="numeric" /></label>
+        <label>Diastolic (bottom) <input type="number" id="in-dia" min="30" max="180" inputmode="numeric" /></label>
+        <label>Pulse <input type="number" id="in-pulse" min="30" max="220" inputmode="numeric" /></label>
+      </div>
+      <button id="btn-to-result">See my result</button>
+    </section>
+
+    <!-- STEP 5: RESULT -->
+    <section id="screen-result" class="screen hidden">
+      <h2>Your result</h2>
+      <div id="result-card"></div>
+      <p class="disclaimer">BP Witness checks <i>how</i> a reading was taken. It does not diagnose anything or tell you whether your blood pressure is healthy. Share your readings with your doctor, and call emergency services if you feel unwell.</p>
+      <div class="actions">
+        <button data-goto="setup">Take another reading</button>
+        <button data-goto="history" class="secondary">See history</button>
+      </div>
+    </section>
+
+    <!-- HISTORY / DOCTOR REPORT -->
+    <section id="screen-history" class="screen hidden">
+      <h2>Reading history</h2>
+      <p class="print-only">BP Witness report. ✅ = taken correctly. ⚠️ = mistakes seen while the reading was taken (listed).</p>
+      <div id="insights"></div>
+      <table id="history-table">
+        <thead><tr><th>Date</th><th>Reading</th><th>Pulse</th><th>Trusted?</th><th>Problems seen</th></tr></thead>
+        <tbody></tbody>
+      </table>
+      <div class="actions no-print">
+        <button id="btn-print">Print report for my doctor</button>
+        <button id="btn-clear" class="secondary">Clear history</button>
+      </div>
+    </section>
+  </main>
+
+  <script type="module" src="src/app.js"></script>
+</body>
+</html>
