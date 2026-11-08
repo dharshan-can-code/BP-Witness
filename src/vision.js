@@ -104,19 +104,25 @@ export function snapshot(videoEl, quality = 0.85) {
 // ---------- Talking detection with the microphone ----------
 // Tune this with your own cuff: raise it if the pump hum gets flagged as talking.
 const TALK_MIN_VARIATION = 0.35;
+// Quietest level that can count as talking. Speech from 2 m away is quiet, so keep this low.
+const TALK_MIN_LEVEL = 0.006;
 
 // Measures loudness. Calibrates to the room's background noise for the first 2 seconds,
 // then flags sustained sound well above that level as talking.
 export class TalkDetector {
   constructor(stream) {
     this.ctx = new AudioContext();
-    this.ctx.resume?.();
+    // Browsers only start audio right after a click. The camera permission prompt can use up
+    // that click, leaving the microphone silent, so try again on the next click or tap.
+    this.wake = () => this.ctx.resume?.();
+    this.wake();
+    document.addEventListener("pointerdown", this.wake);
     const source = this.ctx.createMediaStreamSource(stream);
     this.analyser = this.ctx.createAnalyser();
     this.analyser.fftSize = 1024;
     source.connect(this.analyser);
     this.buf = new Float32Array(this.analyser.fftSize);
-    this.startedAt = performance.now();
+    this.startedAt = null; // set once audio is actually running
     this.ambient = [];
     this.threshold = null;
     this.recent = []; // [time, rms]
@@ -132,13 +138,18 @@ export class TalkDetector {
   // Returns { status, detail } like the posture checks.
   // `ignore` is true while the app itself is speaking, so its own voice isn't counted as talking.
   update(now, ignore = false) {
+    if (this.ctx.state !== "running") {
+      this.wake();
+      return { status: "unknown", detail: "Microphone paused. Click anywhere on the page." };
+    }
+    this.startedAt ??= now;
     const rms = this.level();
     if (this.threshold === null) {
       this.ambient.push(rms);
       if (now - this.startedAt < 2000) return { status: "unknown", detail: "Listening to room noise…" };
       const sorted = [...this.ambient].sort((a, b) => a - b);
-      const median = sorted[Math.floor(sorted.length / 2)] || 0.005;
-      this.threshold = Math.max(median * 3, 0.02);
+      const median = sorted[Math.floor(sorted.length / 2)] || 0.002;
+      this.threshold = Math.max(median * 3, TALK_MIN_LEVEL);
     }
     if (ignore) {
       this.recent = [];
@@ -162,6 +173,7 @@ export class TalkDetector {
   }
 
   close() {
+    document.removeEventListener("pointerdown", this.wake);
     this.ctx.close();
   }
 }
